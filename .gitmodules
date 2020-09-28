@@ -1,0 +1,3 @@
+[submodule "hoverpicker"]
+	path = hoverpicker
+	url = https://github.com/InvalidCo/hoverpicker

@@ -1,0 +1,27 @@
+{
+	"manifest_version": 2,
+	"name": "Hoverpicker pinyin",
+	"version": "0.1",
+
+	"description": "Show wiktionary Chinese definition for glyphs",
+
+	"permissions": [
+		"tabs",
+		"storage",
+		"unlimitedStorage",
+		"https://en.wiktionary.org/w/*",
+		"<all_urls>"
+	],
+
+	"browser_action": {
+		"default_title": "Hoverpicker pinyin",
+		"default_popup": "popup.html"
+	},
+
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": ["/hoverpicker/picker.js", "/hoverpicker/tooltippify.js", "source.js"]
+		}
+	]
+}
