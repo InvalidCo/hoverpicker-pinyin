@@ -1,5 +1,29 @@
 (function() {
 
+/*
+ * return HTML node with allowedTags and text content of allowedTextContentTags, removing all other tags
+ * no attributes are retained
+ */
+function sanitiseHtml(content, allowedTags = ["OL", "LI", "P", "BR"], allowedTextContentTags = ["A", "SPAN"]) {
+	if(typeof content == "string") {
+		return content;
+	} else if(content.nodeType == 3) { // text node?
+		return content.textContent;
+	} else if(allowedTags.includes(content.tagName)) {
+		let accumulator = "<"+content.tagName+">";
+		for(let i = 0; i < content.childNodes.length; i++) {
+			let child = content.childNodes[i];
+			accumulator += sanitiseHtml(child, allowedTags, allowedTextContentTags);
+		}
+		accumulator += "</"+content.tagName+">";
+		return accumulator;
+	} else if(allowedTextContentTags.includes(content.tagName)) {
+		return content.textContent;
+	} else {
+		return "";
+	}
+}
+
 class PinyinPicker extends ToolTippify(HoverOverCharacterPicker) {
 	constructor() {
 		super();
@@ -41,7 +65,7 @@ class PinyinPicker extends ToolTippify(HoverOverCharacterPicker) {
 					}
 					// construct tooltip html
 					result = "<h4>" + mainTitle + " " + pinyinPronounciation + "</h4>";
-					if (definitions) result += definitions.outerHTML;
+					if (definitions) result += sanitiseHtml(definitions);
 				} catch(err) {
 					console.log(err);
 				}
