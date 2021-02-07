@@ -55,23 +55,52 @@ class PinyinPicker extends ToolTippify(HoverOverCharacterPicker) {
 						// parse xml, grab pinyin pronounciation and chinese definitions
 						let doc = request.responseXML;
 						let mainTitle = doc.querySelector("span.Hani").innerText;
-						let pinyinPronounciation = doc.querySelector("span.pinyin-t-form-of")?.innerText || doc.querySelector("span.pinyin-ts-form-of")?.innerText || "???";
-						let definitions;
-						let definitionTitles = doc.querySelectorAll("strong.Hani,headword[lang='zh']");
-						for (let definitionTitle of definitionTitles) {
-							if(definitionTitle.parentElement.nextElementSibling?.tagName === "OL" && definitionTitle.parentElement.previousElementSibling?.innerText === "Definitions[edit]") {
-								definitions = definitionTitle.parentElement.nextElementSibling;
+						let pinyinPronounciation = doc.querySelector("span.pinyin-t-form-of")?.innerText || doc.querySelector("span.pinyin-ts-form-of")?.innerText;
+
+						// construct tooltip html
+						result = "<h4>" + mainTitle;
+						if (pinyinPronounciation) result += " " + pinyinPronounciation
+						result += "</h4>";
+
+						// is simplified form with page reference to another character?
+						let belements = doc.querySelectorAll("b");
+						let redirectionElement = null;
+						for (const b of belements) {
+							if(b.textContent == "For pronunciation and definitions of ") {
+								redirectionElement = b;
 								break;
 							}
 						}
-						// construct tooltip html
-						result = "<h4>" + mainTitle + " " + pinyinPronounciation + "</h4>";
-						if (definitions) result += sanitiseHtml(definitions);
+						if(redirectionElement != null) {
+							let nextCharacter = redirectionElement.nextElementSibling.nextElementSibling.childNodes[1].textContent;
+							result += "simplified form of " + nextCharacter + "<br/>";
+							// find next character and append the result to tooltip html
+							// FIXME: this should search cache first instead of retriggering a network request
+							this.fetchCharacterInformation(nextCharacter).then((r) => {
+								result += r;
+								resolve(result);
+							})
+							.catch((err)=>{
+								reject(err);
+							});
+						} else {
+							// no redirections
+							let definitions;
+							let definitionTitles = doc.querySelectorAll("strong.Hani,headword[lang='zh']");
+							for (let definitionTitle of definitionTitles) {
+								if(definitionTitle.parentElement.nextElementSibling?.tagName === "OL" && definitionTitle.parentElement.previousElementSibling?.innerText === "Definitions[edit]") {
+									definitions = definitionTitle.parentElement.nextElementSibling;
+									break;
+								}
+							}
+							// add definitions to html result
+							if (definitions) result += sanitiseHtml(definitions);
+							resolve(result);
+						}
 					} catch(err) {
-						console.log(err);
+						reject(err);
 					}
 				}
-				resolve(result);
 			};
 
 			request.send(null);
@@ -96,6 +125,9 @@ class PinyinPicker extends ToolTippify(HoverOverCharacterPicker) {
 					if(this.pendingOn == character) {
 						this.show(result);
 					}
+				})
+				.catch((err)=>{
+					console.log(err);
 				});
 			}
 		});
