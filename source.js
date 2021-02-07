@@ -23,7 +23,7 @@ class PinyinPicker extends ToolTippify(HoverOverCharacterPicker) {
 		request.responseType = "document";
 
 		request.onload = (e) => {
-			let result = "¯\_(ツ)_/¯";
+			let result = "¯\\_(ツ)_/¯";
 			if(request.readyState !== 4) return;
 			if(request.status < 400)  {
 				try {
